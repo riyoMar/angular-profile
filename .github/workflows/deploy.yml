@@ -1,6 +1,6 @@
-name: Deploy portfolio to GitHub Pages
+name: Deploy portfolio with Angular to GitHub Pages
 
-on:
+"on":
   push:
     branches:
       - main
@@ -29,6 +29,18 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - name: Expose TypeScript output directory
+        run: |
+          node <<'NODE'
+          const { appendFileSync, readFileSync } = require('node:fs');
+          const tsconfig = JSON.parse(readFileSync('tsconfig.json', 'utf8'));
+          const outDir = tsconfig.compilerOptions?.outDir;
+          if (typeof outDir !== 'string' || outDir.includes('\n')) {
+            throw new Error('tsconfig.json must define a single-line compilerOptions.outDir');
+          }
+          console.log(`TypeScript output directory: ${outDir}`);
+          appendFileSync(process.env.GITHUB_ENV, `TS_OUT_DIR=${outDir}\n`);
+          NODE
       - name: Install dependencies
         run: npm ci
       - name: Build Angular app
